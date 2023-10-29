@@ -1,6 +1,6 @@
 # King Blue News Feed
 
-![King Blue Icon](https://raw.githubusercontent.com/salemae/king_blue_news_feed/main/static/logo.png?token=GHSAT0AAAAAACEFFBQZCNTOL3WRGQWYVQDAZJ6VJGA)
+![King Blue Icon](https://github.com/salemae/king_blue_news_feed/blob/main/static/logo.png?raw=true)
 
 King Blue News Feed is an open-source tool that allows you to manage, subscribe, and send email notifications for various RSS feed sources. Whether you want to keep your subscribers informed about the latest news, vulnerabilities, data leaks, or any other custom category, this application makes it easy to set up and send notifications.
 
