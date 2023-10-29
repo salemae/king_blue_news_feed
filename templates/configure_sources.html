@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+</head>
+<body>
+    <!-- Navigation bar -->
+    <div class="ui fixed inverted menu">
+        <div class="ui container">
+            <a href="/" class="header item">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
+                King Blue | News Feed
+            </a>
+            <a href="/config" class="item">Config</a>
+            <a href="/manage_feeds" class="item">Manage Feeds</a>
+        </div>
+    </div>
+    <!-- Add padding between navigation bar and main content -->
+    <div style="padding-top: 60px;"></div>
+    <section class="ui primary vertical masthead center aligned segment">
+        <div class="ui container">
+            <h1 class="ui header">Configure Feed Sources and Categories</h1>
+            <form action="/configure_sources" method="POST" class="ui form">
+                <div class="field">
+                    <label>Feed Source Name</label>
+                    <input type="text" name="name" placeholder="Enter Feed Source Name">
+                </div>
+                <div class="field">
+                    <label>Feed Source URL</label>
+                    <input type="text" name="url" placeholder="Enter Feed Source URL">
+                </div>
+                <button class="ui blue button" type="submit">Add Feed Source</button>
+            </form>
+
+            <form action="/configure_categories" method="POST" class="ui form">
+                <div class="field">
+                    <label>Category Name</label>
+                    <input type="text" name="category_name" placeholder="Enter Category Name">
+                </div>
+                <div class="field">
+                    <label>Category URL</label>
+                    <input type="text" name="category_url" placeholder="Enter Category URL">
+                </div>
+                <button class="ui blue button" type="submit">Add Category</button>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

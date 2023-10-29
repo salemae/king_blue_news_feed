@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+</head>
+<body>
+    <!-- Navigation bar -->
+    <div class="ui fixed inverted menu">
+        <div class="ui container">
+            <a href="/" class="header item">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
+                King Blue | News Feed
+            </a>
+            <a href="/config" class="item">Config</a>
+            <a href="/manage_feeds" class="item">Manage Feeds</a>
+        </div>
+    </div>
+    <!-- Add padding between navigation bar and main content -->
+    <div style="padding-top: 60px;"></div>
+    <section class="ui primary vertical masthead aligned segment">
+        
+        <div class="ui container">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="ui {{ category }} message">{{ message }}</div>
+            {% endfor %}
+            <div class="ui segment">
+                <h1 class="ui header">SMTP Configuration</h1>
+                <form class="ui form" method="post" action="/config">
+                    <div class="field">
+                        <label>SMTP Server</label>
+                        <input type="text" name="server" value="{{ smtp_config[1] }}" required>
+                    </div>
+                    <div class="field">
+                        <label>SMTP Port</label>
+                        <input type="number" name="port" value="{{ smtp_config[2] }}" required>
+                    </div>
+                    <div class="field">
+                        <label>SMTP User</label>
+                        <input type="text" name="user" value="{{ smtp_config[3] }}" required>
+                    </div>
+                    <div class="field">
+                        <label>SMTP Password</label>
+                        <input type="password" name="password" value="{{ smtp_config[4] }}" required>
+                    </div>
+                    <button class="ui button" type="submit">Update SMTP Configuration</button>
+                </form>
+            </div>
+        </div>
+        
+    </section>
+</body>
+</html>

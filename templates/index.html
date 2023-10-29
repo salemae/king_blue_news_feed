@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation bar -->
+    <div class="ui fixed inverted menu">
+        <div class="ui container">
+            <a href="/" class="header item">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
+                King Blue | News Feed
+            </a>
+            <a href="/config" class="item">Config</a>
+            <a href="/manage_feeds" class="item">Manage Feeds</a>
+        </div>
+    </div>
+    <!-- Add padding between navigation bar and main content -->
+    <div style="padding-top: 60px;"></div>
+    <section class="ui primary vertical masthead center aligned segment">
+
+        <div class="ui container">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="ui {{ category }} message">{{ message }}</div>
+            {% endfor %}
+            <div class="ui segment">
+                <h1 class="ui header">RSS Feed Notifier</h1>
+                <form action="/subscribe" method="POST" class="ui form">
+                    <div class="field">
+                        <div class="ui left action input">
+                            <input type="email" name="email" placeholder="Enter your email">
+                            <button class="ui blue button" type="submit"><i class="envelope outline icon"></i> Subscribe</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="ui segment">
+                <table class="ui striped selectable celled table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Actions</th>  <!-- Add a column for actions -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscriber in subscribers %}
+                        <tr>
+                            <td>{{ subscriber[1] }}</td>
+                            <td>
+                                <a href="/edit/{{ subscriber[0] }}" class="ui icon button" title="Edit">
+                                    <i class="edit icon"></i>
+                                </a>
+                                <a href="/remove/{{ subscriber[0] }}" class="ui icon button" title="Remove">
+                                    <i class="trash icon"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <a class="ui blue button" href="/send_email"><i class="envelope icon"></i> Send Emails</a>
+        </div>
+    </section>
+</body>
+</html>
