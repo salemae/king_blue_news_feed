@@ -47,3 +47,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 We would like to express our gratitude to the open-source community for their valuable contributions and support.
 
+## Screenshots
+
