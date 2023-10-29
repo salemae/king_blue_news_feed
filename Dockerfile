@@ -1,23 +1,20 @@
-# Use the official Python image as the base image
-FROM python:3.8
+# Use an official Python runtime as a parent image
+FROM python:3.8-slim-buster
 
-# Set environment variables
-ENV FLASK_APP app.py
-ENV FLASK_RUN_HOST 0.0.0.0
-
-# Set the working directory inside the container
+# Set the working directory to /app
 WORKDIR /app
 
-# Copy the application files to the container
-COPY app.py .
-COPY templates templates
-COPY subscribers.db .
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Install required Python packages
-RUN pip install flask feedparser
+# Install any needed packages specified in requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-# Expose the port your Flask app will run on
-EXPOSE 5000
+# Make port 80 available to the world outside this container
+EXPOSE 80
 
-# Start the Flask application
-CMD ["flask", "run"]
+# Define environment variable
+ENV NAME World
+
+# Run app.py when the container launches
+CMD ["python", "app.py"]

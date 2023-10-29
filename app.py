@@ -6,11 +6,42 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
 import os
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 template_env = Environment(loader=FileSystemLoader('templates'))
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+scheduler = BackgroundScheduler()
+
+def schedule_send_email_job():
+    scheduler = BackgroundScheduler()
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
+    
+    # Check if the email_schedule table exists
+    c.execute('SELECT name FROM sqlite_master WHERE type="table" AND name="email_schedule"')
+    table_exists = c.fetchone()
+
+    if table_exists:
+        # The email_schedule table exists, so retrieve the scheduled time
+        c.execute('SELECT hour, minute FROM email_schedule WHERE id = 1')
+        schedule_data = c.fetchone()
+        
+        if schedule_data:
+            # Use the scheduled hour and minute from the database
+            hour, minute = schedule_data
+            scheduler.add_job(send_email_background, 'cron', hour=hour, minute=minute)
+        else:
+            # There is no schedule data, use a default of every 24 hours
+            scheduler.add_job(send_email_background, 'interval', hours=24)
+    else:
+        # The email_schedule table doesn't exist, use a default of every 24 hours
+        scheduler.add_job(send_email_background, 'interval', hours=24)
+
+    conn.close()
+    scheduler.start()
 
 def init_db():
     conn = sqlite3.connect('subscribers.db')
@@ -55,6 +86,13 @@ def init_db():
             url TEXT,
             category TEXT,
             FOREIGN KEY (category) REFERENCES categories (name)
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS email_schedule (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hour INTEGER,
+            minute INTEGER
         )
     ''')
 
@@ -151,6 +189,46 @@ def configure_smtp():
     conn.close()
 
     return render_template('config.html', smtp_config=smtp_config)
+
+@app.route('/configure_schedule', methods=['GET', 'POST'])
+def configure_email_schedule():
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
+
+    # Fetch the current email delivery schedule
+    c.execute('SELECT * FROM email_schedule WHERE id=1')
+    email_schedule = c.fetchone()
+
+    if request.method == 'POST':
+        # Get the email schedule settings from the form
+        hour = int(request.form['hour'])
+        minute = int(request.form['minute'])
+
+        if email_schedule:
+            # Update the existing email schedule
+            c.execute('UPDATE email_schedule SET hour=?, minute=? WHERE id=1',
+                      (hour, minute))
+        else:
+            # If it doesn't exist, create it
+            c.execute('INSERT INTO email_schedule (id, hour, minute) VALUES (1, ?, ?)',
+                      (hour, minute))
+
+        conn.commit()
+        flash('Email schedule configuration updated!', 'success')
+
+        # Stop the current scheduler
+        scheduler.shutdown()
+
+        # Start a new scheduler with the updated schedule
+        start_scheduler()
+
+    # Fetch the current email schedule from the database
+    if not email_schedule:
+        email_schedule = [1, 0, 0]  # Initialize with default values if it doesn't exist
+
+    conn.close()
+
+    return render_template('configure_schedule.html', email_schedule=email_schedule)
 
 
 # Modify the route to fetch both feed sources and categories
@@ -357,8 +435,69 @@ def send_notification(email, category_name, category_feeds):
         except Exception as e:
             print(f"Error sending email to {email}: {str(e)}")
 
+def send_email_background():
+    print('email sending background started')
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
 
+    # Fetch subscribers' emails
+    c.execute('SELECT email FROM subscribers')
+    subscribers = [row[0] for row in c.fetchall()]
+
+    # Fetch categories and their associated feed sources
+    c.execute('SELECT * FROM categories')
+    categories = c.fetchall()
+
+    for category in categories:
+        category_name = category[1]  # Get the category name
+        c.execute('SELECT id FROM feed_sources WHERE category = ?', (category_name,))
+        source_ids = [row[0] for row in c.fetchall()]
+
+        category_feeds = []
+
+        for source_id in source_ids:
+            c.execute('SELECT url FROM feed_sources WHERE id = ?', (source_id,))
+            source_url = c.fetchone()
+            if source_url:
+                source_feed = feedparser.parse(source_url[0])
+                category_feeds.append(source_feed)
+
+        # Check if there are feeds in the category
+        if category_feeds:
+            # Extract entries from the first source (you may want to aggregate all entries from multiple sources)
+            entries = category_feeds[0]['entries']
+
+            # Check if there are entries in the category
+            if entries:
+                # Send email per category with all feeds associated with that category to all subscribers
+                for subscriber in subscribers:
+                    send_notification(subscriber, category_name, entries)
+
+    conn.close()
+
+
+def start_scheduler():
+    # Start the scheduler
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM email_schedule WHERE id=1')
+    email_schedule = c.fetchone()
+
+    if email_schedule:
+        # Retrieve the email schedule settings from the database
+        hour, minute = email_schedule[1], email_schedule[2]
+
+        # Add the scheduled job using the retrieved settings
+        scheduler.add_job(send_email_background, 'cron', hour=hour, minute=minute)
+    else:
+        # If no schedule exists, use a default of every 24 hours
+        scheduler.add_job(send_email_background, 'interval', hours=24)
+
+    scheduler.start()
+    conn.close()
 
 if __name__ == '__main__':
     init_db()
+
+    start_scheduler()
     app.run(host='0.0.0.0', port=5000, debug=True)

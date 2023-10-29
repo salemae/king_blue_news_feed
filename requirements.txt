@@ -2,3 +2,5 @@ Flask
 feedparser
 Jinja2
 click
+apscheduler
+

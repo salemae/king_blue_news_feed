@@ -3,7 +3,7 @@
 <head>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <title>King Blue | SMTP</title>
+    <title>King Blue | Email Schedule</title>
 </head>
 <body>
     <!-- Navigation bar -->
@@ -27,25 +27,17 @@
             <div class="ui {{ category }} message">{{ message }}</div>
             {% endfor %}
             <div class="ui segment">
-                <h1 class="ui header">SMTP Configuration</h1>
-                <form class="ui form" method="post" action="/config">
+                <h1 class="ui header">Email Schedule Configuration</h1>
+                <form class="ui form" method="post" action="/configure_schedule">
                     <div class="field">
-                        <label>SMTP Server</label>
-                        <input type="text" name="server" value="{{ smtp_config[1] }}" required>
+                        <label>Email Delivery Hour</label>
+                        <input type="number" name="hour" min="0" max="23" value="{{ email_schedule[1] }}" required>
                     </div>
                     <div class="field">
-                        <label>SMTP Port</label>
-                        <input type="number" name="port" value="{{ smtp_config[2] }}" required>
+                        <label>Email Delivery Minute</label>
+                        <input type="number" name="minute" min="0" max="59" value="{{ email_schedule[2] }}" required>
                     </div>
-                    <div class="field">
-                        <label>SMTP User</label>
-                        <input type="text" name="user" value="{{ smtp_config[3] }}" required>
-                    </div>
-                    <div class="field">
-                        <label>SMTP Password</label>
-                        <input type="password" name="password" value="{{ smtp_config[4] }}" required>
-                    </div>
-                    <button class="ui button" type="submit">Update SMTP Configuration</button>
+                    <button class="ui button" type="submit">Update Email Schedule</button>
                 </form>
             </div>
         </div>
