@@ -50,10 +50,12 @@ We would like to express our gratitude to the open-source community for their va
 ## Screenshots
 
 Home Page and Subscripers Management
-(https://raw.githubusercontent.com/salemae/king_blue_news_feed/main/screenshots/Screenshot_1.png?token=GHSAT0AAAAAACEFFBQY3CGRBQAJEBKTPQ4GZJ6VTEQ)
+![Home Page and Subscripers Management](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_1.png?raw=true)
+
 
 Feeds Management
-(https://raw.githubusercontent.com/salemae/king_blue_news_feed/main/screenshots/Screenshot_2.png?token=GHSAT0AAAAAACEFFBQYHTP3HX4KMN6PFDBOZJ6VT3A)
+![Feeds Management](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_2.png?raw=true)
 
 Email Example
-(https://raw.githubusercontent.com/salemae/king_blue_news_feed/main/screenshots/Screenshot_3.png?token=GHSAT0AAAAAACEFFBQYD7PU5HWQD5OI57QEZJ6VUHA)
+
+![Email Example](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_3.png?raw=true)
