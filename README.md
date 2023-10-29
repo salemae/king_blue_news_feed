@@ -12,10 +12,6 @@ King Blue News Feed is an open-source tool that allows you to manage, subscribe,
 
 - **Feed Source Management:** Add, edit, or remove RSS feed sources categorized into News, Vulnerabilities, Data Leakage, or Custom categories.
 
-- **Category Management:** Create, edit, or remove categories to organize your feed sources.
-
-- **Category-Source Associations:** Associate feed sources with categories, allowing you to send notifications based on categories.
-
 - **Email Notifications:** Automatically send email notifications to subscribers based on feed categories.
 
 ## Getting Started
@@ -38,30 +34,6 @@ python app.py
 
 
 4. Open a web browser and access the application at `http://localhost:5000`.
-
-## Usage
-
-1. **Subscriber Management:**
-- Visit the `/subscribe` route to subscribe new users.
-- Visit the `/edit/<subscriber_id>` route to edit existing subscribers.
-- Visit the `/remove/<subscriber_id>` route to remove subscribers.
-
-2. **SMTP Configuration:**
-- Configure SMTP settings at `/config`.
-
-3. **Feed Source Management:**
-- Manage feed sources at `/manage_feeds`.
-- Add new feed sources using the `/add_feed_source` route.
-- Edit and remove feed sources using the `/edit_source/<feed_source_id>` and `/remove_source/<feed_source_id>` routes.
-
-4. **Category Management:**
-- Create, edit, and remove categories at `/manage_feeds`.
-
-5. **Category-Source Associations:**
-- Configure associations at `/configure_sources/<category_id>`.
-
-6. **Sending Email Notifications:**
-- Trigger the email notifications by visiting the `/send_email` route.
 
 ## Contributing
 
