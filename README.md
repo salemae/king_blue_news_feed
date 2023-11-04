@@ -1,61 +1,59 @@
-# King Blue News Feed
+# King Blue Newsletter App
 
-![King Blue Icon](https://github.com/salemae/king_blue_news_feed/blob/main/static/logo.png?raw=true)
+![Insert Logo Here - Replace with Your App Logo](https://github.com/salemae/king_blue_news_feed/blob/main/static/logo.png)
 
-King Blue News Feed is an open-source tool that allows you to manage, subscribe, and send email notifications for various RSS feed sources. Whether you want to keep your subscribers informed about the latest news, vulnerabilities, data leaks, or any other custom category, this application makes it easy to set up and send notifications.
+The King Blue Newsletter App is a Flask-based web application designed to manage and send newsletters to subscribers. It allows users to subscribe to newsletters, manage subscribers, configure SMTP settings, schedule email delivery, and organize feed sources into categories. The app periodically sends newsletters to subscribers based on the configured schedule and feed sources.
+
+![Screenshot 1 - Home Page](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_2.png)
+![Screenshot 2 - Subscriber Management](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_3.png)
 
 ## Features
 
-- **Subscriber Management:** Add, edit, or remove subscribers to your email notifications.
+- **Subscriber Management**: Users can subscribe to newsletters by providing their email addresses. Subscribers can be edited and removed by administrators.
 
-- **SMTP Configuration:** Easily configure your SMTP server settings for sending emails.
+- **Feed Source Management**: Administrators can add, edit, and remove RSS feed sources. Feed sources can be organized into categories.
 
-- **Feed Source Management:** Add, edit, or remove RSS feed sources categorized into News, Vulnerabilities, Data Leakage, or Custom categories.
+- **Category Management**: Administrators can create, edit, and remove categories for feed sources.
 
-- **Email Notifications:** Automatically send email notifications to subscribers based on feed categories.
+- **SMTP Configuration**: Administrators can configure SMTP settings to enable email delivery.
 
-## Getting Started
+- **Email Schedule Configuration**: Administrators can configure the schedule for sending newsletters. This includes specifying the hour and minute for email delivery.
 
-Follow these steps to set up and run King Blue News Feed on your local environment:
-
-1. Clone the repository from GitHub:
-git clone https://github.com/yourusername/king-blue-news-feed.git
+- **Automatic Email Delivery**: The app uses a background scheduler to automatically send newsletters to subscribers based on the configured schedule. Newsletters are customized for each category and include the latest feed entries.
 
 
-2. Create a Python virtual environment and install dependencies:
-cd king-blue-news-feed
-python -m venv venv
-source venv/bin/activate # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+## Installation
 
+1. Clone the repository:
 
-3. Initialize the SQLite database:
-python app.py
+   ```shell
+   git clone https://github.com/your_username/king-blue-newsletter-app.git
+   cd king-blue-newsletter-app
 
+## Usage
 
-4. Open a web browser and access the application at `http://localhost:5000`.
+1. Access the web application at [http://localhost:5000](http://localhost:5000).
+
+2. Use the web interface to manage subscribers, feed sources, categories, SMTP settings, and email schedule.
+
+3. Subscribers can subscribe to newsletters by providing their email addresses.
+
+4. Feed sources can be organized into categories. Categories can be created, edited, and removed.
+
+5. Configure SMTP settings to enable email delivery.
+
+6. Configure the email delivery schedule to control when newsletters are sent.
+
+7. The app will automatically send newsletters to subscribers based on the configured schedule. Each newsletter includes the latest feed entries from the specified categories.
+
+## Directory Structure
+
+- `app.py`: The main Flask application.
+- `templates/`: HTML templates for the web pages.
+- `static/`: Static assets (CSS, images, etc.).
+- `requirements.txt`: List of Python dependencies.
+- `subscribers.db`: SQLite database for storing subscriber data and configuration.
 
 ## Contributing
 
-We welcome contributions from the open-source community. Whether it's fixing bugs, adding new features, or improving the documentation, your contributions are highly appreciated. Please follow our [contributing guidelines](CONTRIBUTING.md).
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-We would like to express our gratitude to the open-source community for their valuable contributions and support.
-
-## Screenshots
-
-Home Page and Subscripers Management
-![Home Page and Subscripers Management](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_1.png?raw=true)
-
-
-Feeds Management
-![Feeds Management](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_2.png?raw=true)
-
-Email Example
-
-![Email Example](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_3.png?raw=true)
+If you want to contribute to this project, please fork the repository, create a new branch, make your changes, and submit a pull request.
