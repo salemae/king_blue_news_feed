@@ -36,25 +36,29 @@ You can also run the King Blue Newsletter App using Docker for containerized dep
 2. Build a Docker image from the provided Dockerfile. Make sure you have Docker installed on your system.
 
    ```shell
-   docker build -t king-blue-app .```
+   docker build -t king-blue-app .
+   ```
 
 3. Once the image is built, you can run the app in a Docker container. Replace your_port with the desired port for the app (e.g., 8080):
 
    ```shell
-   docker run -p your_port:5000 -d king-blue-app```
+   docker run -p your_port:5000 -d king-blue-app
+   ```
 
    This command maps the app's internal port (5000) to the specified port on your host system.
 
 4. Access the app by opening a web browser and navigating to the following URL:
 
    ```shell
-   http://localhost:your_port```
+   http://localhost:your_port
+   ```
 
 5. To stop and remove the Docker container when you're done, use the following command:
 
    ```shell
    docker stop $(docker ps -a -q)
-   docker rm $(docker ps -a -q)```
+   docker rm $(docker ps -a -q)
+   ```
     Now, the King Blue Newsletter App should be up and running in a Docker container, accessible at the specified port on your local machine.
 
 

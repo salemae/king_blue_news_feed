@@ -74,6 +74,21 @@ def init_db():
         )
     ''')
 
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            keyword TEXT UNIQUE
+        )
+    ''')
+
+    # Check if the keywords table is empty and insert the sample keyword if it is
+    c.execute('SELECT COUNT(*) FROM keywords')
+    count = c.fetchone()[0]
+
+    if count == 0:
+        sample_keyword = "thisisasamplewordtonotbemonitored"
+        c.execute('INSERT INTO keywords (keyword) VALUES (?)', (sample_keyword,))
+
     # Predefine your categories
     categories = ["Main"]
     for category in categories:
@@ -430,6 +445,45 @@ def configure_sources(category_id):
     conn.close()
     return render_template('configure_sources.html', category=category, sources=sources, selected_sources=selected_sources)
 
+@app.route('/manage_keywords', methods=['GET', 'POST'])
+def manage_keywords():
+    conn = sqlite3.connect('subscribers.db')  # Replace with your database file
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        if 'Add Keyword' in request.form:
+            keyword = request.form['keyword']  # Updated to match the HTML form field name
+            try:
+                if keyword:
+                    c.execute('INSERT INTO keywords (keyword) VALUES (?)', (keyword,))
+                    conn.commit()
+                    flash('Keyword added successfully!', 'success')
+                else:
+                    flash('Keyword cannot be empty!', 'error')
+            except Exception as e:
+                flash(f'Error adding keyword: {str(e)}', 'error')
+
+    c.execute('SELECT keyword FROM keywords')
+    keywords = [row[0] for row in c.fetchall()]
+
+    conn.close()
+    return render_template('manage_keywords.html', keywords=keywords)
+
+@app.route('/remove_keyword/<string:id>', methods=['POST'])
+def remove_keyword(id):
+    conn = sqlite3.connect('subscribers.db')  # Replace with your database file
+    c = conn.cursor()
+    
+    try:
+        c.execute('DELETE FROM keywords WHERE keyword = ?', (id,))
+        conn.commit()
+        flash(f'Keyword "{id}" removed successfully!', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+
+    conn.close()
+    return redirect(url_for('manage_keywords'))
+
 
 def get_feed_sources():
     conn = sqlite3.connect('subscribers.db')  # Replace 'your_database.db' with your database file
@@ -466,38 +520,46 @@ def send_email():
     c.execute('SELECT email FROM subscribers')
     subscribers = [row[0] for row in c.fetchall()]
 
+    # Fetch monitored keywords
+    c.execute('SELECT word FROM keywords')
+    monitored_keywords = [row[0] for row in c.fetchall()]
+
     # Fetch categories and their associated feed sources
     c.execute('SELECT * FROM categories')
     categories = c.fetchall()
+
+    matching_articles = []
 
     for category in categories:
         category_name = category[1]  # Get the category name
         c.execute('SELECT id FROM feed_sources WHERE category = ?', (category_name,))
         source_ids = [row[0] for row in c.fetchall()]
 
-        category_feeds = []
-
         for source_id in source_ids:
             c.execute('SELECT url FROM feed_sources WHERE id = ?', (source_id,))
             source_url = c.fetchone()
             if source_url:
                 source_feed = feedparser.parse(source_url[0])
-                category_feeds.append(source_feed)
+                category_entries = source_feed.entries
 
-        # Check if there are feeds in the category
-        if category_feeds:
-            # Extract entries from the first source (you may want to aggregate all entries from multiple sources)
-            entries = category_feeds[0]['entries']
+                # Check if entries match the monitored keywords
+                matching_articles.extend([
+                    (entry, category_name) for entry in category_entries
+                    if any(keyword.lower() in entry.get('title', '').lower() or keyword.lower() in entry.get('summary', '').lower() for keyword in monitored_keywords)
+                ])
 
-            # Check if there are entries in the category
-            if entries:
-                # Send email per category with all feeds associated with that category to all subscribers
-                for subscriber in subscribers:
-                    send_notification(subscriber, category_name, entries)
+    # Send a separate email with matching articles to all subscribers
+    if matching_articles:
+        for subscriber in subscribers:
+            matching_entries = [entry for entry, category_name in matching_articles if category_name]
+
+            if matching_entries:
+                send_notification(subscriber, 'Matching Articles', matching_entries)
 
     conn.close()
     flash('Emails sent successfully!', 'success')
     return redirect(url_for('index'))
+
 
 
 def send_notification(email, category_name, category_feeds):
