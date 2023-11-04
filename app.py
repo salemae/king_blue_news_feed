@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import feedparser
 import sqlite3
 import smtplib
@@ -8,6 +9,9 @@ from jinja2 import Environment, FileSystemLoader
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_session import Session
+import hashlib
+from functools import wraps
+from flask_login import login_user
 
 
 template_env = Environment(loader=FileSystemLoader('templates'))
@@ -17,6 +21,42 @@ app.secret_key = 'n)-VzT{/1_0k)3sGFe?FD]/Y-X}COW'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 scheduler = BackgroundScheduler()
+login_manager = LoginManager()
+# Configure the login manager
+login_manager.login_view = "login"  # Set the view for login
+login_manager.init_app(app)  # Initialize the app with the login manager
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = sqlite3.connect('subscribers.db')  # Replace with your actual database file
+    c = conn.cursor()
+    c.execute("SELECT id, username FROM users WHERE id = ?", (user_id,))
+    user_data = c.fetchone()
+    conn.close()
+
+    if user_data:
+        user_id, username = user_data
+        user = User(user_id, username)  # Replace with your User class
+        return user
+
+    return None
+
+class User:
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+
+    def is_authenticated(self):
+        return True  # Implement your own logic for authentication
+
+    def is_active(self):
+        return True  # Implement your own logic for account activation
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
 
 def schedule_send_email_job():
     scheduler = BackgroundScheduler()
@@ -113,12 +153,106 @@ def init_db():
             minute INTEGER
         )
     ''')
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL
+    )
+    ''')
+    
+    # Check if the admin user already exists
+    admin_user = c.execute("SELECT * FROM users WHERE username = 'admin'").fetchone()
+
+    # If the admin user doesn't exist, create it with a hashed password
+    if not admin_user:
+        admin_password = 'admin'  # Password in plaintext
+        hashed_password = hash_password(admin_password)
+        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', hashed_password))
 
     conn.commit()
     conn.close()
 
-# Subscribe route
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        conn = sqlite3.connect('subscribers.db')  # Modify the database filename
+        c = conn.cursor()
+
+        # Check if the user exists in the database
+        user_data = c.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+
+        if user_data and check_password(user_data[2], password):
+            user = User(user_data[0], user_data[1])  # Assuming the user_data structure
+            login_user(user)
+            session['logged_in'] = True
+            session['username'] = username
+            flash('Logged in successfully!', 'success')
+            conn.close()
+            return redirect(url_for('index'))
+        else:
+            flash('Loggin Failed', 'error')
+
+    return render_template('login.html')
+
+# Logout route
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('login'))
+
+import sqlite3
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        # Connect to the database
+        conn = sqlite3.connect('subscribers.db')
+        c = conn.cursor()
+
+        # Fetch the current user's password from the database
+        c.execute('SELECT password FROM users WHERE id = ?', (current_user.id,))
+        result = c.fetchone()
+        if result:
+            stored_password = result[0]
+        else:
+            conn.close()
+            flash('User not found!', 'error')
+            return redirect(url_for('change_password'))
+
+        # Check if the old password is correct
+        if check_password(stored_password, old_password):
+            # Check if the new password and confirmation match
+            if new_password == confirm_password:
+                # Hash the new password and update it in the database
+                hashed_password = hash_password(new_password)
+                c.execute('UPDATE users SET password = ? WHERE id = ?', (hashed_password, current_user.id))
+                conn.commit()
+                conn.close()
+                flash('Password changed successfully!', 'success')
+                return redirect(url_for('index'))
+            else:
+                flash('New password and confirmation do not match!', 'error')
+        else:
+            flash('Old password is incorrect!', 'error')
+
+        conn.close()
+
+    return render_template('change_password.html', current_user=current_user)
+
+
+
 @app.route('/subscribe', methods=['POST'])
+@login_required
 def subscribe():
     email = request.form['email']
     if email:
@@ -130,8 +264,27 @@ def subscribe():
         flash('Subscribed successfully!', 'success')
     return redirect(url_for('index'))
 
+def hash_password(password):
+    # Create a new salt (a random value) for each password
+    salt = os.urandom(32)
+    # Hash the password and salt
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    # Convert the key to a hexadecimal representation
+    password_hash = salt + key
+    return password_hash
+
+def check_password(stored_password, provided_password):
+    # Extract the salt and key from the stored password
+    salt = stored_password[:32]
+    key = stored_password[32:]
+    # Hash the provided password using the salt
+    new_key = hashlib.pbkdf2_hmac('sha256', provided_password.encode('utf-8'), salt, 100000)
+    # Compare the calculated key with the stored key
+    return new_key == key
+
 # Edit subscriber route
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit(id):
     if request.method == 'POST':
         new_email = request.form['email']
@@ -147,10 +300,11 @@ def edit(id):
     c.execute('SELECT * FROM subscribers WHERE id = ?', (id,))
     subscriber = c.fetchone()
     conn.close()
-    return render_template('edit.html', subscriber=subscriber)
+    return render_template('edit.html', subscriber=subscriber, current_user=current_user)
 
 # Remove subscriber route
 @app.route('/remove/<int:id>')
+@login_required
 def remove(id):
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -161,7 +315,9 @@ def remove(id):
     return redirect(url_for('index'))
 
 # Index route
+
 @app.route('/')
+@login_required
 def index():
     # Connect to the database
     conn = sqlite3.connect('subscribers.db')
@@ -191,9 +347,11 @@ def index():
     conn.close()
 
     # Pass the counts to the template
-    return render_template('index.html', subscribers=subscribers, rss_feeds_count=rss_feeds_count, subscriber_count=subscriber_count, category_count=category_count, keyword_count=keyword_count)
+    return render_template('index.html',current_user=current_user, subscribers=subscribers, rss_feeds_count=rss_feeds_count, subscriber_count=subscriber_count, category_count=category_count, keyword_count=keyword_count)
+
 
 @app.route('/manage_categories', methods=['GET'])
+@login_required
 def manage_categories():
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -204,10 +362,12 @@ def manage_categories():
 
     conn.close()
 
-    return render_template('manage_categories.html', categories=categories)
+    return render_template('manage_categories.html', categories=categories, current_user=current_user)
 
 # New route to add a category
+
 @app.route('/add_category', methods=['POST'])
+@login_required
 def add_category():
     category_name = request.form['category_name']
 
@@ -232,7 +392,9 @@ def add_category():
     return redirect(url_for('manage_categories'))
 
 # New route to remove a category
+
 @app.route('/remove_category/<int:id>')
+@login_required
 def remove_category(id):
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -254,7 +416,9 @@ def remove_category(id):
     return redirect(url_for('manage_categories'))
 
 # New route to edit a category
+
 @app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_category(id):
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -273,10 +437,11 @@ def edit_category(id):
     c.execute('SELECT * FROM categories WHERE id = ?', (id,))
     category = c.fetchone()
     conn.close()
-    return render_template('edit_category.html', category=category)
+    return render_template('edit_category.html', category=category, current_user=current_user)
 
 
 @app.route('/config', methods=['GET', 'POST'])
+@login_required
 def configure_smtp():
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -309,9 +474,11 @@ def configure_smtp():
 
     conn.close()
 
-    return render_template('config.html', smtp_config=smtp_config)
+    return render_template('config.html', smtp_config=smtp_config, current_user=current_user)
+
 
 @app.route('/configure_schedule', methods=['GET', 'POST'])
+@login_required
 def configure_email_schedule():
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -349,11 +516,13 @@ def configure_email_schedule():
 
     conn.close()
 
-    return render_template('configure_schedule.html', email_schedule=email_schedule)
+    return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user)
 
 
 # Modify the route to fetch both feed sources and categories
+
 @app.route('/manage_feeds', methods=['GET'])
+@login_required
 def manage_feeds():
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -367,11 +536,12 @@ def manage_feeds():
 
     conn.close()
 
-    return render_template('manage_feeds.html', feed_sources=feed_sources, categories=categories)
+    return render_template('manage_feeds.html', feed_sources=feed_sources, categories=categories, current_user=current_user)
 
 
 
 @app.route('/add_feed_source', methods=['POST'])
+@login_required
 def add_feed_source():
     name = request.form['name']
     url = request.form['url']
@@ -389,7 +559,9 @@ def add_feed_source():
 
 
 # Edit feed source route
+
 @app.route('/edit_source/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_source(id):
     if request.method == 'POST':
         new_name = request.form['name']
@@ -406,10 +578,12 @@ def edit_source(id):
     c.execute('SELECT * FROM feed_sources WHERE id = ?', (id,))
     source = c.fetchone()
     conn.close()
-    return render_template('edit_source.html', source=source)
+    return render_template('edit_source.html', source=source, current_user=current_user)
 
 # Remove feed source route
+
 @app.route('/remove_source/<int:id>')
+@login_required
 def remove_source(id):
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -421,6 +595,7 @@ def remove_source(id):
 
 
 @app.route('/configure_sources/<int:category_id>', methods=['GET', 'POST'])
+@login_required
 def configure_sources(category_id):
     if request.method == 'POST':
         selected_sources = request.form.getlist('sources')
@@ -447,9 +622,11 @@ def configure_sources(category_id):
     c.execute('SELECT source_id FROM category_sources WHERE category_id = ?', (category_id,))
     selected_sources = [row[0] for row in c.fetchall()]
     conn.close()
-    return render_template('configure_sources.html', category=category, sources=sources, selected_sources=selected_sources)
+    return render_template('configure_sources.html',current_user=current_user, category=category, sources=sources, selected_sources=selected_sources)
+
 
 @app.route('/manage_keywords', methods=['GET', 'POST'])
+@login_required
 def manage_keywords():
     conn = sqlite3.connect('subscribers.db')  # Replace with your database file
     c = conn.cursor()
@@ -471,9 +648,11 @@ def manage_keywords():
     keywords = [row[0] for row in c.fetchall()]
 
     conn.close()
-    return render_template('manage_keywords.html', keywords=keywords)
+    return render_template('manage_keywords.html', keywords=keywords, current_user=current_user)
+
 
 @app.route('/remove_keyword/<string:id>', methods=['GET'])
+@login_required
 def remove_keyword(id):
     conn = sqlite3.connect('subscribers.db')  # Replace with your database file
     c = conn.cursor()
@@ -490,7 +669,7 @@ def remove_keyword(id):
 
 
 def get_feed_sources():
-    conn = sqlite3.connect('subscribers.db')  # Replace 'your_database.db' with your database file
+    conn = sqlite3.connect('subscribers.db')  # Replace 'subscribers.db' with your database file
     c = conn.cursor()
     c.execute('SELECT * FROM feed_sources')
     feed_sources = c.fetchall()
@@ -498,7 +677,7 @@ def get_feed_sources():
     return feed_sources
 
 def get_categories():
-    conn = sqlite3.connect('subscribers.db')  # Replace 'your_database.db' with your database file
+    conn = sqlite3.connect('subscribers.db')  # Replace 'subscribers.db' with your database file
     c = conn.cursor()
     c.execute('SELECT * FROM categories')
     categories = c.fetchall()
@@ -516,6 +695,7 @@ def get_subscribers():
 
 
 @app.route('/send_email', methods=['GET'])
+@login_required
 def send_email():
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -604,7 +784,6 @@ def send_notification(email, category_name, category_feeds):
             print(f"Error sending email to {email}: {str(e)}")
 
 def send_email_background():
-    print('email sending background started')
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
 
@@ -612,34 +791,41 @@ def send_email_background():
     c.execute('SELECT email FROM subscribers')
     subscribers = [row[0] for row in c.fetchall()]
 
+    # Fetch monitored keywords
+    c.execute('SELECT word FROM keywords')
+    monitored_keywords = [row[0] for row in c.fetchall()]
+
     # Fetch categories and their associated feed sources
     c.execute('SELECT * FROM categories')
     categories = c.fetchall()
+
+    matching_articles = []
 
     for category in categories:
         category_name = category[1]  # Get the category name
         c.execute('SELECT id FROM feed_sources WHERE category = ?', (category_name,))
         source_ids = [row[0] for row in c.fetchall()]
 
-        category_feeds = []
-
         for source_id in source_ids:
             c.execute('SELECT url FROM feed_sources WHERE id = ?', (source_id,))
             source_url = c.fetchone()
             if source_url:
                 source_feed = feedparser.parse(source_url[0])
-                category_feeds.append(source_feed)
+                category_entries = source_feed.entries
 
-        # Check if there are feeds in the category
-        if category_feeds:
-            # Extract entries from the first source (you may want to aggregate all entries from multiple sources)
-            entries = category_feeds[0]['entries']
+                # Check if entries match the monitored keywords
+                matching_articles.extend([
+                    (entry, category_name) for entry in category_entries
+                    if any(keyword.lower() in entry.get('title', '').lower() or keyword.lower() in entry.get('summary', '').lower() for keyword in monitored_keywords)
+                ])
 
-            # Check if there are entries in the category
-            if entries:
-                # Send email per category with all feeds associated with that category to all subscribers
-                for subscriber in subscribers:
-                    send_notification(subscriber, category_name, entries)
+    # Send a separate email with matching articles to all subscribers
+    if matching_articles:
+        for subscriber in subscribers:
+            matching_entries = [entry for entry, category_name in matching_articles if category_name]
+
+            if matching_entries:
+                send_notification(subscriber, 'Matching Articles', matching_entries)
 
     conn.close()
 
