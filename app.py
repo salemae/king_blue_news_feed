@@ -12,6 +12,7 @@ from flask_session import Session
 import hashlib
 from functools import wraps
 from flask_login import login_user
+from datetime import datetime, timedelta
 
 
 template_env = Environment(loader=FileSystemLoader('templates'))
@@ -487,10 +488,34 @@ def configure_email_schedule():
     c.execute('SELECT * FROM email_schedule WHERE id=1')
     email_schedule = c.fetchone()
 
+    # Initialize the variables to default values
+    hour = 0
+    minute = 0
+
+    if email_schedule:
+        # If the email schedule exists, get the values
+        hour = email_schedule[1]
+        minute = email_schedule[2]
+
+    # Calculate the scheduled time in minutes since midnight
+    scheduled_time_minutes = hour * 60 + minute
+
+    # Calculate the current time in minutes since midnight
+    current_time = datetime.now().time()
+    current_time_minutes = current_time.hour * 60 + current_time.minute
+
+    # Calculate the time remaining until the next email delivery
+    minutes_remaining = scheduled_time_minutes - current_time_minutes
+
+    if minutes_remaining < 0:
+        minutes_remaining += 24 * 60  # If it's negative, add 24 hours
+
     if request.method == 'POST':
         # Get the email schedule settings from the form
         hour = int(request.form['hour'])
         minute = int(request.form['minute'])
+
+        # Update your database or schedule email delivery here
 
         if email_schedule:
             # Update the existing email schedule
@@ -509,14 +534,12 @@ def configure_email_schedule():
 
         # Start a new scheduler with the updated schedule
         start_scheduler()
+        return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user, minutes_remaining=minutes_remaining)
 
-    # Fetch the current email schedule from the database
-    if not email_schedule:
-        email_schedule = [1, 0, 0]  # Initialize with default values if it doesn't exist
 
     conn.close()
 
-    return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user)
+    return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user, minutes_remaining=minutes_remaining)
 
 
 # Modify the route to fetch both feed sources and categories

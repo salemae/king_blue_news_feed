@@ -10,27 +10,64 @@
     <!-- Add padding between navigation bar and main content -->
     <div style="padding-top: 60px;"></div>
     <section class="ui primary vertical masthead aligned segment">
-        
         <div class="ui container">
             {% for category, message in get_flashed_messages(with_categories=true) %}
             <div class="ui {{ category }} message">{{ message }}</div>
             {% endfor %}
+            <div class="ui message">
+                The current delivery time is set to: {{ "%02d:%02d" % (email_schedule[1] % 12, email_schedule[2]) }} {{ "AM" if email_schedule[1] < 12 else "PM" }} <br>
+                {% if minutes_remaining > 0 %}
+                {% set hours_remaining = minutes_remaining // 60 %}
+                {% set remaining_minutes = minutes_remaining % 60 %}
+                {% if hours_remaining > 0 %}
+                    {{ hours_remaining }} {{ "hour" if hours_remaining == 1 else "hours" }},
+                {% endif %}
+                {{ remaining_minutes }} {{ "minute" if remaining_minutes == 1 else "minutes" }} remaining until the next email delivery.
+                {% else %}
+                    The next email delivery is in progress or overdue.
+                {% endif %}
+            </div>
+            
+
             <div class="ui segment">
                 <h1 class="ui header">Email Schedule Configuration</h1>
-                <p>The format is in 24 hours format</p>
+                <p>Set the time for email delivery:</p>
                 <form class="ui form" method="post" action="/configure_schedule">
-                    <div class="field">
-                        <label>Delivery Time in Hours</label>
-                        <input type="number" name="hour" min="0" max="23" value="{{ email_schedule[1] }}" required>
-                    </div>
-                    <div class="field">
-                        <label>Email Delivery Minute</label>
-                        <input type="number" name="minute" min="0" max="59" value="{{ email_schedule[2] }}" required>
+                    <div class="two fields">
+                        <div class="field">
+                            <label>Delivery Hour</label>
+                            <div class="ui selection dropdown">
+                                <input type="hidden" name="hour">
+                                <i class="dropdown icon"></i>
+                                <div class="default text">Select Hour</div>
+                                <div class="menu">
+                                    {% for hour in range(24) %}
+                                        <div class="item" data-value="{{ hour }}">{{ hour }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Delivery Minute</label>
+                            <div class="ui selection dropdown">
+                                <input type="hidden" name="minute">
+                                <i class="dropdown icon"></i>
+                                <div class="default text">Select Minute</div>
+                                <div class="menu">
+                                    {% for minute in range(60) %}
+                                        <div class="item" data-value="{{ minute }}">{{ minute }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <button class="ui button" type="submit">Update Email Schedule</button>
                 </form>
             </div>
         </div>
+    </section>
+
+    
         
     </section>
     {% include 'help_modal.html' %}
@@ -44,5 +81,10 @@
             });
         });
     </script>
+        <script>
+            $(document).ready(function() {
+                $('.ui.dropdown').dropdown();
+            });
+        </script>
 </body>
 </html>
