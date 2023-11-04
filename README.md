@@ -30,7 +30,7 @@ You can also run the King Blue Newsletter App using Docker for containerized dep
 
    ```shell
    git clone https://github.com/salemae/king_blue_news_feed.git
-   cd king-blue-newsletter-app 
+   cd king_blue_news_feed
    ```
 
 2. Build a Docker image from the provided Dockerfile. Make sure you have Docker installed on your system.
