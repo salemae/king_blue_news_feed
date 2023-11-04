@@ -7,15 +7,31 @@
 </head>
 <body>
     <!-- Navigation bar -->
+    <!-- Navigation bar -->
     <div class="ui fixed inverted menu">
         <div class="ui container">
             <a href="/" class="header item">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
                 King Blue | News Feed
             </a>
-            <a href="/config" class="item">SMTP</a>
-            <a href="/manage_feeds" class="item">Manage Feeds</a>
-            <a href="/configure_schedule" class="item">Email Delivery</a>
+            <a href="/config" class="item">
+                <i class="cog icon"></i> SMTP
+            </a>
+            <a href="/manage_feeds" class="item">
+                <i class="rss icon"></i> Manage Feeds
+            </a>
+            <a href="/manage_categories" class="item">
+                <i class="folder icon"></i> Manage Categories
+            </a>
+            <a href="/configure_schedule" class="item">
+                <i class="envelope outline icon"></i> Email Delivery
+            </a>
+            
+            <div class="right menu">
+                <a href="https://github.com/salemae/king_blue_news_feed" target="_blank" class="item">
+                    <i class="github icon"></i> Repo
+                </a>
+            </div>
         </div>
     </div>
     <!-- Add padding between navigation bar and main content -->
@@ -28,9 +44,10 @@
             {% endfor %}
             <div class="ui segment">
                 <h1 class="ui header">Email Schedule Configuration</h1>
+                <p>The format is in 24 hours format</p>
                 <form class="ui form" method="post" action="/configure_schedule">
                     <div class="field">
-                        <label>Email Delivery Hour</label>
+                        <label>Delivery Time in Hours</label>
                         <input type="number" name="hour" min="0" max="23" value="{{ email_schedule[1] }}" required>
                     </div>
                     <div class="field">

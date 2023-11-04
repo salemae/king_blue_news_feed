@@ -3,3 +3,4 @@ feedparser
 Jinja2
 click
 apscheduler
+Flask-Session

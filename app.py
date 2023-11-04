@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash, session
 import feedparser
 import sqlite3
 import smtplib
@@ -7,12 +7,15 @@ from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
+from flask_session import Session
 
 
 template_env = Environment(loader=FileSystemLoader('templates'))
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'n)-VzT{/1_0k)3sGFe?FD]/Y-X}COW'
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 scheduler = BackgroundScheduler()
 
 def schedule_send_email_job():
@@ -72,7 +75,7 @@ def init_db():
     ''')
 
     # Predefine your categories
-    categories = ["News", "Vulnerabilities", "Data Leakage", "Custom"]
+    categories = ["Main"]
     for category in categories:
         # Check if the category already exists
         c.execute('SELECT name FROM categories WHERE name = ?', (category,))
@@ -98,9 +101,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-
-
-
 
 # Subscribe route
 @app.route('/subscribe', methods=['POST'])
@@ -148,12 +148,114 @@ def remove(id):
 # Index route
 @app.route('/')
 def index():
+    # Connect to the database
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
+
+    # Fetch the count of RSS feeds
+    c.execute('SELECT COUNT(*) FROM feed_sources')
+    rss_feeds_count = c.fetchone()[0]
+
+    # Fetch the count of subscribers
+    c.execute('SELECT COUNT(*) FROM subscribers')
+    subscriber_count = c.fetchone()[0]
+
+    # Fetch the count of categories
+    c.execute('SELECT COUNT(*) FROM categories')
+    category_count = c.fetchone()[0]
+
+    # Fetch the list of subscribers
     c.execute('SELECT * FROM subscribers')
     subscribers = c.fetchall()
+
+    # Close the database connection
     conn.close()
-    return render_template('index.html', subscribers=subscribers)
+
+    # Pass the counts to the template
+    return render_template('index.html', subscribers=subscribers, rss_feeds_count=rss_feeds_count, subscriber_count=subscriber_count, category_count=category_count)
+
+@app.route('/manage_categories', methods=['GET'])
+def manage_categories():
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
+
+    # Fetch the list of existing categories
+    c.execute('SELECT * FROM categories')
+    categories = c.fetchall()
+
+    conn.close()
+
+    return render_template('manage_categories.html', categories=categories)
+
+# New route to add a category
+@app.route('/add_category', methods=['POST'])
+def add_category():
+    category_name = request.form['category_name']
+
+    if category_name:
+        conn = sqlite3.connect('subscribers.db')
+        c = conn.cursor()
+
+        # Check if the category already exists
+        c.execute('SELECT name FROM categories WHERE name = ?', (category_name,))
+        existing_category = c.fetchone()
+
+        if not existing_category:
+            # If the category does not exist, add it
+            c.execute('INSERT INTO categories (name) VALUES (?)', (category_name,))
+            conn.commit()
+            conn.close()
+            flash('Category added successfully!', 'success')
+        else:
+            conn.close()
+            flash('Category already exists!', 'error')
+
+    return redirect(url_for('manage_categories'))
+
+# New route to remove a category
+@app.route('/remove_category/<int:id>')
+def remove_category(id):
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
+
+    # Check if there are feed sources associated with this category
+    c.execute('SELECT * FROM feed_sources WHERE category = (SELECT name FROM categories WHERE id = ?)', (id,))
+    feed_sources = c.fetchall()
+
+    if feed_sources:
+        conn.close()
+        flash('Cannot remove the category as it is associated with feed sources!', 'error')
+        return redirect(url_for('manage_categories'))
+
+    # Remove the category
+    c.execute('DELETE FROM categories WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    flash('Category removed!', 'success')
+    return redirect(url_for('manage_categories'))
+
+# New route to edit a category
+@app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
+def edit_category(id):
+    conn = sqlite3.connect('subscribers.db')
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        new_category_name = request.form['new_category_name']
+
+        # Check if the new category name is not empty
+        if new_category_name:
+            c.execute('UPDATE categories SET name = ? WHERE id = ?', (new_category_name, id))
+            conn.commit()
+            conn.close()
+            flash('Category updated!', 'success')
+            return redirect(url_for('manage_categories'))
+
+    c.execute('SELECT * FROM categories WHERE id = ?', (id,))
+    category = c.fetchone()
+    conn.close()
+    return render_template('edit_category.html', category=category)
+
 
 @app.route('/config', methods=['GET', 'POST'])
 def configure_smtp():

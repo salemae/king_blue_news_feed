@@ -8,15 +8,31 @@
 </head>
 <body>
     <!-- Navigation bar -->
+    <!-- Navigation bar -->
     <div class="ui fixed inverted menu">
         <div class="ui container">
             <a href="/" class="header item">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
                 King Blue | News Feed
             </a>
-            <a href="/config" class="item">SMTP</a>
-            <a href="/manage_feeds" class="item">Manage Feeds</a>
-            <a href="/configure_schedule" class="item">Email Delivery</a>
+            <a href="/config" class="item">
+                <i class="cog icon"></i> SMTP
+            </a>
+            <a href="/manage_feeds" class="item">
+                <i class="rss icon"></i> Manage Feeds
+            </a>
+            <a href="/manage_categories" class="item">
+                <i class="folder icon"></i> Manage Categories
+            </a>
+            <a href="/configure_schedule" class="item">
+                <i class="envelope outline icon"></i> Email Delivery
+            </a>
+            
+            <div class="right menu">
+                <a href="https://github.com/salemae/king_blue_news_feed" target="_blank" class="item">
+                    <i class="github icon"></i> Repo
+                </a>
+            </div>
         </div>
     </div>
     <div style="padding-top: 60px;"></div>
@@ -70,12 +86,11 @@
                             <td>{{ feed_source[1] }}</td>
                             <td>{{ feed_source[2] }}</td>
                             <td>
-                                <a href="/edit_source/{{ feed_source[0] }}" class="ui icon button" title="Edit">
-                                    <i class="edit icon"></i>
-                                </a>
-                                <a href="/remove_source/{{ feed_source[0] }}" class="ui icon button" title="Remove">
-                                    <i class="trash icon"></i>
-                                </a>
+                                <div class="ui buttons">
+                                    <a class="ui button" href="/edit_source/{{ feed_source[0] }}">Edit</a>
+                                    <div class="or"></div>
+                                    <a class="ui negative button" href="/remove_source/{{ feed_source[0] }}">Remove</a>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}
