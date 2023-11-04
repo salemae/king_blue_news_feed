@@ -22,10 +22,13 @@
             <a href="/manage_categories" class="item">
                 <i class="folder icon"></i> Manage Categories
             </a>
+            <a href="/manage_keywords" class="item">
+                <i class="tag icon"></i> Manage Keywords
+            </a>
             <a href="/configure_schedule" class="item">
                 <i class="envelope outline icon"></i> Email Delivery
             </a>
-            
+    
             <div class="right menu">
                 <a class="item green" id="helpButton"><i class="question circle icon"></i> Help</a>
                 <a href="https://github.com/salemae/king_blue_news_feed" target="_blank" class="item">
@@ -34,6 +37,7 @@
             </div>
         </div>
     </div>
+    
     <!-- Add padding between navigation bar and main content -->
     <div style="padding-top: 60px;"></div>
     <section class="ui primary vertical masthead center aligned segment">
@@ -43,7 +47,7 @@
             <div class="ui {{ category }} message">{{ message }}</div>
             {% endfor %}
             <div class="ui segment">
-                <div class="ui three cards">
+                <div class="ui four cards">
                     <!-- Number of RSS Feeds Widget -->
                     <div class="card teal">
                         <div class="content">
@@ -77,6 +81,17 @@
                         <div class="extra content">
                             <div class="data center aligned">
                                 <p class="big">{{ category_count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card blue">
+                        <div class="content">
+                            <i class="fas fa-tags icon big"></i>
+                            <div class="header">Keywords</div>
+                        </div>
+                        <div class="extra content">
+                            <div class="data center aligned">
+                                <p class="big">{{ keyword_count }}</p>
                             </div>
                         </div>
                     </div>

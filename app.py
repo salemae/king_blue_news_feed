@@ -179,6 +179,10 @@ def index():
     c.execute('SELECT COUNT(*) FROM categories')
     category_count = c.fetchone()[0]
 
+    # Fetch the count of keywords
+    c.execute('SELECT COUNT(*) FROM keywords')
+    keyword_count = c.fetchone()[0]
+
     # Fetch the list of subscribers
     c.execute('SELECT * FROM subscribers')
     subscribers = c.fetchall()
@@ -187,7 +191,7 @@ def index():
     conn.close()
 
     # Pass the counts to the template
-    return render_template('index.html', subscribers=subscribers, rss_feeds_count=rss_feeds_count, subscriber_count=subscriber_count, category_count=category_count)
+    return render_template('index.html', subscribers=subscribers, rss_feeds_count=rss_feeds_count, subscriber_count=subscriber_count, category_count=category_count, keyword_count=keyword_count)
 
 @app.route('/manage_categories', methods=['GET'])
 def manage_categories():
