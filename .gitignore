@@ -1,3 +1,4 @@
 /.env
 /subscribers.db
-/flask_session
+/subscribers.db.bak
+/flask_session/
