@@ -14,7 +14,7 @@ echo "1. Docker Install"
 echo "2. Local Install"
 read -p "Enter your choice (1/2): " choice
 
-if [[ "$choice" == "1" ]]; then
+if [ "$choice" = "1" ]; then
   # Docker Install
   echo "Starting Docker Install for Kingblue..."
   
@@ -28,7 +28,7 @@ if [[ "$choice" == "1" ]]; then
   echo "Access Kingblue at: http://localhost:8888"
   echo "Default login credentials for Kingblue: Username: admin, Password: admin"
 
-elif [[ "$choice" == "2" ]]; then
+elif [ "$choice" = "2" ]; then
   # Local Install
   echo "Starting Local Install for Kingblue..."
   
