@@ -4,8 +4,9 @@
 
 The King Blue Newsletter App is a Flask-based web application designed to manage and send newsletters to subscribers. It allows users to subscribe to newsletters, manage subscribers, configure SMTP settings, schedule email delivery, and organize feed sources into categories. The app periodically sends newsletters to subscribers based on the configured schedule and feed sources.
 
-![Screenshot 1 - Home Page](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_2.png)
-![Screenshot 2 - Subscriber Management](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_3.png)
+![Screenshot 1](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_1.png)
+![Screenshot 2](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_2.png)
+![Screenshot 3](https://github.com/salemae/king_blue_news_feed/blob/main/screenshots/Screenshot_3.png)
 
 ## Features
 
