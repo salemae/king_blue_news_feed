@@ -11,24 +11,54 @@ The King Blue Newsletter App is a Flask-based web application designed to manage
 
 - **Subscriber Management**: Users can subscribe to newsletters by providing their email addresses. Subscribers can be edited and removed by administrators.
 
-- **Feed Source Management**: Administrators can add, edit, and remove RSS feed sources. Feed sources can be organized into categories.
+- **Feed Source Management**: you can add, edit, and remove RSS feed sources. Feed sources can be organized into categories.
 
-- **Category Management**: Administrators can create, edit, and remove categories for feed sources.
+- **Category Management**: you can create, edit, and remove categories for feed sources.
 
-- **SMTP Configuration**: Administrators can configure SMTP settings to enable email delivery.
+- **SMTP Configuration**: you can configure SMTP settings to enable email delivery.
 
-- **Email Schedule Configuration**: Administrators can configure the schedule for sending newsletters. This includes specifying the hour and minute for email delivery.
+- **Email Schedule Configuration**: you can configure the schedule for sending newsletters. This includes specifying the hour and minute for email delivery.
 
 - **Automatic Email Delivery**: The app uses a background scheduler to automatically send newsletters to subscribers based on the configured schedule. Newsletters are customized for each category and include the latest feed entries.
 
 
-## Installation
+## Docker Installation
+
+You can also run the King Blue Newsletter App using Docker for containerized deployment. Follow these steps to set up the app with Docker:
 
 1. Clone the repository:
 
    ```shell
-   git clone https://github.com/your_username/king-blue-newsletter-app.git
-   cd king-blue-newsletter-app
+   git clone https://github.com/salemae/king_blue_news_feed.git
+   cd king-blue-newsletter-app 
+   ```
+
+2. Build a Docker image from the provided Dockerfile. Make sure you have Docker installed on your system.
+
+   ```shell
+   docker build -t king-blue-app .```
+
+3. Once the image is built, you can run the app in a Docker container. Replace your_port with the desired port for the app (e.g., 8080):
+
+   ```shell
+   docker run -p your_port:5000 -d king-blue-app```
+
+   This command maps the app's internal port (5000) to the specified port on your host system.
+
+4. Access the app by opening a web browser and navigating to the following URL:
+
+   ```shell
+   http://localhost:your_port```
+
+5. To stop and remove the Docker container when you're done, use the following command:
+
+   ```shell
+   docker stop $(docker ps -a -q)
+   docker rm $(docker ps -a -q)```
+    Now, the King Blue Newsletter App should be up and running in a Docker container, accessible at the specified port on your local machine.
+
+
+Build a Docker image from the provided Dockerfile. Make sure you have Docker installed on your system.
 
 ## Usage
 
