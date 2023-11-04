@@ -8,20 +8,6 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Check if Docker is installed and running
-if ! command -v docker &> /dev/null; then
-  echo "Docker is not installed or not running."
-  echo "Please install Docker and make sure it is running before proceeding."
-  exit 1
-fi
-
-# Check if Python is installed
-if ! command -v python3 &> /dev/null; then
-  echo "Python is not installed."
-  echo "Please install Python before proceeding."
-  exit 1
-fi
-
 # Give the user the option to choose between Docker or Local Install
 echo "Choose an installation method for Kingblue:"
 echo "1. Docker Install"
