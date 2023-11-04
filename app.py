@@ -473,7 +473,7 @@ def manage_keywords():
     conn.close()
     return render_template('manage_keywords.html', keywords=keywords)
 
-@app.route('/remove_keyword/<string:id>', methods=['POST'])
+@app.route('/remove_keyword/<string:id>', methods=['GET'])
 def remove_keyword(id):
     conn = sqlite3.connect('subscribers.db')  # Replace with your database file
     c = conn.cursor()

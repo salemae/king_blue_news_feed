@@ -7,36 +7,7 @@
     <title>King Blue | Manage Categories</title>
 </head>
 <body>
-    <div class="ui fixed inverted menu">
-        <div class="ui container">
-            <a href="/" class="header item">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
-                King Blue | News Feed
-            </a>
-            <a href="/config" class="item">
-                <i class="cog icon"></i> SMTP
-            </a>
-            <a href="/manage_feeds" class="item">
-                <i class="rss icon"></i> Manage Feeds
-            </a>
-            <a href="/manage_categories" class="item">
-                <i class="folder icon"></i> Manage Categories
-            </a>
-            <a href="/manage_keywords" class="item">
-                <i class="tag icon"></i> Manage Keywords
-            </a>
-            <a href="/configure_schedule" class="item">
-                <i class="envelope outline icon"></i> Email Delivery
-            </a>
-    
-            <div class="right menu">
-                <a class="item green" id="helpButton"><i class="question circle icon"></i> Help</a>
-                <a href="https://github.com/salemae/king_blue_news_feed" target="_blank" class="item">
-                    <i class="github icon"></i> Repo
-                </a>
-            </div>
-        </div>
-    </div>
+    {% include 'navbar.html' %}
     <!-- Add padding between navigation bar and main content -->
     <div style="padding-top: 60px;"></div>
     <section class="ui primary vertical masthead aligned segment">
@@ -84,6 +55,16 @@
         </div>
     </section>
     
-    
+    {% include 'help_modal.html' %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    <script>
+        // JavaScript to show the help modal
+        $(document).ready(function() {
+            $('#helpButton').click(function() {
+                $('#helpModal').modal('show');
+            });
+        });
+    </script>
 </body>
 </html>

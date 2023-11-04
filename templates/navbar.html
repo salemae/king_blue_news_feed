@@ -1,0 +1,39 @@
+<div class="ui fixed inverted menu">
+    <div class="ui container">
+        <a href="/" class="header item">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="King Blue Logo">
+            King Blue | News Feed
+        </a>
+        <div class="ui simple dropdown item">
+            Manage <i class="dropdown icon"></i>
+            <div class="menu">
+                <a href="/manage_feeds" class="item">
+                    <i class="rss icon"></i> Manage Feeds
+                </a>
+                <a href="/manage_categories" class="item">
+                    <i class="folder icon"></i> Manage Categories
+                </a>
+                <a href="/manage_keywords" class="item">
+                    <i class="tag icon"></i> Manage Keywords
+                </a>
+            </div>
+        </div>
+        <div class="ui simple dropdown item">
+            Settings <i class="dropdown icon"></i>
+            <div class="menu">
+                <a href="/config" class="item">
+                    <i class="cog icon"></i> SMTP
+                </a>
+                <a href="/configure_schedule" class="item">
+                    <i class="envelope outline icon"></i> Email Delivery
+                </a>
+            </div>
+        </div>
+        <div class="right menu">
+            <a class="item green" id="helpButton"><i class="question circle icon"></i> Help</a>
+            <a href="https://github.com/salemae/king_blue_news_feed" target="_blank" class="item">
+                <i class="github icon"></i> KingBlue
+            </a>
+        </div>
+    </div>
+</div>
