@@ -21,48 +21,79 @@ The King Blue Newsletter App is a Flask-based web application designed to manage
 
 - **Automatic Email Delivery**: The app uses a background scheduler to automatically send newsletters to subscribers based on the configured schedule. Newsletters are customized for each category and include the latest feed entries.
 
+- **Keywords Monitoring**: The app has a keywords monitoring list which will alert you when a news article matches your keywords.
 
-## Docker Installation
 
-You can also run the King Blue Newsletter App using Docker for containerized deployment. Follow these steps to set up the app with Docker:
+## Installation Using `install.sh` Script
 
-1. Clone the repository:
+### Prerequisites
+
+- Docker (for Docker Install)
+- Python 3
+- Python virtual environment (`venv` module)
+- pip package manager
+
+### Installation Steps
+
+1. Clone the Kingblue repository:
 
    ```shell
    git clone https://github.com/salemae/king_blue_news_feed.git
-   cd king_blue_news_feed
    ```
 
-2. Build a Docker image from the provided Dockerfile. Make sure you have Docker installed on your system.
+2. Run the provided installation script:
+      ```shell
+   sudo sh install.sh
+   ```
+
+
+3. Choose the installation method:
+- For Docker Install (Option 1), the Kingblue app will be available at: [http://localhost:8888](http://localhost:8888)
+- For Local Install (Option 2), the Kingblue app will be available at: [http://localhost:5000](http://localhost:5000)
+- Default login credentials for Kingblue:
+  - Username: admin
+  - Password: admin
+
+
+
+## Manual Installation
+
+You can also run the King Blue Newsletter App using Docker for containerized deployment. Follow these steps to set up the app with Docker:
+
+1. Clone the Kingblue repository:
 
    ```shell
-   docker build -t king-blue-app .
+   git clone https://github.com/salemae/king_blue_news_feed.git
    ```
 
-3. Once the image is built, you can run the app in a Docker container. Replace your_port with the desired port for the app (e.g., 8080):
-
-   ```shell
-   docker run -p your_port:5000 -d king-blue-app
+2. Create a Python virtual environment:
+    ```shell
+   python3 -m venv venv
+   
+   source venv/bin/activate
    ```
 
-   This command maps the app's internal port (5000) to the specified port on your host system.
-
-4. Access the app by opening a web browser and navigating to the following URL:
-
-   ```shell
-   http://localhost:your_port
+3. Install the required packages from `requirements.txt`:
+    ```shell
+   pip install -r requirements.txt
    ```
 
-5. To stop and remove the Docker container when you're done, use the following command:
 
-   ```shell
-   docker stop $(docker ps -a -q)
-   docker rm $(docker ps -a -q)
+4. Run the Kingblue app:
+
+    ```shell
+   python app.py
    ```
-    Now, the King Blue Newsletter App should be up and running in a Docker container, accessible at the specified port on your local machine.
 
+5. Access Kingblue in your web browser at: [http://localhost:5000](http://localhost:5000)
 
-Build a Docker image from the provided Dockerfile. Make sure you have Docker installed on your system.
+6. Default login credentials for Kingblue:
+- Username: admin
+- Password: admin
+
+That's it! You have successfully installed Kingblue.
+
+For more information and updates, visit the [Kingblue GitHub repository](https://github.com/salemae/king_blue_news_feed).
 
 ## Usage
 
@@ -78,7 +109,9 @@ Build a Docker image from the provided Dockerfile. Make sure you have Docker ins
 
 6. Configure the email delivery schedule to control when newsletters are sent.
 
-7. The app will automatically send newsletters to subscribers based on the configured schedule. Each newsletter includes the latest feed entries from the specified categories.
+7. Customize the news by specifing keywords via keywords managements
+
+8. The app will automatically send newsletters to subscribers based on the configured schedule. Each newsletter includes the latest feed entries from the specified categories.
 
 ## Directory Structure
 
