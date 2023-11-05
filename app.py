@@ -14,7 +14,7 @@ from functools import wraps
 from flask_login import login_user
 from datetime import datetime, timedelta
 
-
+scheduled_job_id = None
 template_env = Environment(loader=FileSystemLoader('templates'))
 
 app = Flask(__name__)
@@ -150,8 +150,8 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS email_schedule (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            hour INTEGER,
-            minute INTEGER
+            hour INTEGER DEFAULT 23,
+            minute INTEGER DEFAULT 0
         )
     ''')
     c.execute('''
@@ -527,73 +527,46 @@ def configure_smtp():
         print(str(e))
         return redirect(url_for('configure_smtp'))
 
+
 @app.route('/configure_schedule', methods=['GET', 'POST'])
 @login_required
 def configure_email_schedule():
+    global scheduled_job_id
     try:
         conn = sqlite3.connect('subscribers.db')
         c = conn.cursor()
 
-        # Fetch the current email delivery schedule
-        c.execute('SELECT * FROM email_schedule WHERE id=1')
-        email_schedule = c.fetchone()
-
-        # Initialize the variables to default values
-        hour = 0
-        minute = 0
-
-        if email_schedule:
-            # If the email schedule exists, get the values
-            hour = email_schedule[1]
-            minute = email_schedule[2]
-
-        # Calculate the scheduled time in minutes since midnight
-        scheduled_time_minutes = hour * 60 + minute
-
-        # Calculate the current time in minutes since midnight
-        current_time = datetime.now().time()
-        current_time_minutes = current_time.hour * 60 + current_time.minute
-
-        # Calculate the time remaining until the next email delivery
-        minutes_remaining = scheduled_time_minutes - current_time_minutes
-
-        if minutes_remaining < 0:
-            minutes_remaining += 24 * 60  # If it's negative, add 24 hours
-
         if request.method == 'POST':
-            # Get the email schedule settings from the form
-            hour = int(request.form['hour'])
-            minute = int(request.form['minute'])
+            new_hour = int(request.form.get('hour', 0))
+            new_minute = int(request.form.get('minute', 0))
 
-            # Update your database or schedule email delivery here
-
-            if email_schedule:
-                # Update the existing email schedule
-                c.execute('UPDATE email_schedule SET hour=?, minute=? WHERE id=1',
-                          (hour, minute))
-            else:
-                # If it doesn't exist, create it
-                c.execute('INSERT INTO email_schedule (id, hour, minute) VALUES (1, ?, ?)',
-                          (hour, minute))
-
+            c.execute('INSERT OR REPLACE INTO email_schedule (id, hour, minute) VALUES (1, ?, ?)',
+                      (new_hour, new_minute))
             conn.commit()
+            
+            # Reschedule the job without restarting the scheduler
+            scheduler.reschedule_job(scheduled_job_id, trigger='cron', hour=new_hour, minute=new_minute)
+
+            c.execute('SELECT hour, minute FROM email_schedule WHERE id=1')
+            email_schedule = c.fetchone()
+            hour, minute = email_schedule or (0, 0)  # Use (0, 0) as default values if email_schedule is None
+
+            conn.close()
             flash('Email schedule configuration updated!', 'success')
+            return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user, hour=hour, minute=minute)
 
-            # Stop the current scheduler
-            scheduler.shutdown()
+        c.execute('SELECT hour, minute FROM email_schedule WHERE id=1')
+        email_schedule = c.fetchone()
+        hour, minute = email_schedule or (0, 0)  # Use (0, 0) as default values if email_schedule is None
 
-            # Start a new scheduler with the updated schedule
-            start_scheduler()
-            return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user, minutes_remaining=minutes_remaining)
 
         conn.close()
+        return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user, hour=hour, minute=minute)
 
-        return render_template('configure_schedule.html', email_schedule=email_schedule, current_user=current_user, minutes_remaining=minutes_remaining)
     except Exception as e:
         flash('An error occurred while processing your request.', 'error')
         print(str(e))
         return redirect(url_for('configure_email_schedule'))
-
 
 @app.route('/manage_feeds', methods=['GET'])
 @login_required
@@ -943,6 +916,7 @@ def send_email_background():
 
 
 def start_scheduler():
+    global scheduled_job_id
     # Start the scheduler
     conn = sqlite3.connect('subscribers.db')
     c = conn.cursor()
@@ -954,16 +928,16 @@ def start_scheduler():
         hour, minute = email_schedule[1], email_schedule[2]
 
         # Add the scheduled job using the retrieved settings
-        scheduler.add_job(send_email_background, 'cron', hour=hour, minute=minute)
+        job = scheduler.add_job(send_email_background, 'cron', hour=hour, minute=minute)
+        scheduled_job_id = job.id
     else:
         # If no schedule exists, use a default of every 24 hours
-        scheduler.add_job(send_email_background, 'interval', hours=24)
-
+        job = scheduler.add_job(send_email_background, 'interval', hours=24)
+        scheduled_job_id = job.id
     scheduler.start()
     conn.close()
 
 if __name__ == '__main__':
     init_db()
-
     start_scheduler()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
